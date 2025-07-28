@@ -1,11 +1,92 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>最简单的网页</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小小电子xxdz的github网页</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+            animation: fadeIn 1s ease-in-out;
+        }
+        h1 {
+            color: #4a6baf;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .social-link {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #4a6baf;
+            color: white;
+            line-height: 50px;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .social-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(74, 107, 175, 0.4);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        footer {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-    <h1>你好，世界！</h1>
-    <p>这是一个最简单的HTML网页。</p>
+    <div class="container">
+        <h1>你好，世界！</h1>
+        <p>我是小小电子xxdz~</p>
+        <p>欢迎来到我的个人主页！这里记录着我的编程学习和项目分享~q(≧▽≦q)</p>
+        
+        <div class="social-links">
+            <a href="https://github.com/xxdz-Official" class="social-link">GitHub主页</a>
+            <a href="https://space.bilibili.com/3461569935575626" class="social-link">B站主页</a>
+            <a href="https://miku66ccff.freeflarum.com" class="social-link">自建论坛</a>
+        </div>
+        
+        <footer>
+            © 2025 小小电子xxdz - 不保留所有权利(lll￢ω￢)
+        </footer>
+    </div>
 </body>
 </html>

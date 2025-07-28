@@ -3,63 +3,69 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>小小电子xxdz的github网页</title>
     <style>
         body {
             font-family: 'Microsoft YaHei', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             margin: 0;
-            padding: 0;
+            padding: 20px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: #333;
+            box-sizing: border-box;
         }
         .container {
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 40px;
             text-align: center;
             max-width: 800px;
-            width: 90%;
+            width: calc(100% - 40px);
             animation: fadeIn 1s ease-in-out;
         }
         h1 {
             color: #4a6baf;
-            font-size: 2.5rem;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
             margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
         p {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             line-height: 1.6;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         .social-links {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             margin-top: 30px;
         }
         .social-link {
-            display: inline-block;
-            width: 50px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
             height: 50px;
-            border-radius: 50%;
+            border-radius: 25px;
             background-color: #4a6baf;
             color: white;
-            line-height: 50px;
-            font-size: 1.5rem;
+            font-size: 1rem;
             transition: all 0.3s ease;
             text-decoration: none;
+            padding: 0 20px;
         }
         .social-link:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(74, 107, 175, 0.4);
+            background-color: #3a5a9f;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -69,6 +75,17 @@
             margin-top: 30px;
             font-size: 0.9rem;
             color: #666;
+            line-height: 1.5;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            .social-link {
+                min-width: 100px;
+                font-size: 0.9rem;
+                padding: 0 15px;
+            }
         }
     </style>
 </head>
@@ -76,7 +93,7 @@
     <div class="container">
         <h1>你好，世界！</h1>
         <p>我是小小电子xxdz~</p>
-        <p>欢迎来到我的个人主页！这里记录着我的编程学习和项目分享~q(≧▽≦q)</p>
+        <p>欢迎来到我的个人主页！这里记录着我的编程学习、项目分享、兽兽分享~q(≧▽≦q)</p>
         
         <div class="social-links">
             <a href="https://github.com/xxdz-Official" class="social-link">GitHub主页</a>

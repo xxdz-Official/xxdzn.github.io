@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miku66ccff弹幕墙组件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #222;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            cursor: default;
+        }
+        
+        .container {
+            width: 180px;
+            height: 200px;
+            background-color: white;
+            border: 2px solid #39C5bb;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+        
+        /* 标题栏样式 */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 26px;
+            background-color: #66ccff;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+        }
+        
+        .title-icon-wrapper {
+            position: relative;
+            width: 30px;
+            height: 30px;
+            flex-shrink: 0;
+        }
+        
+        .title-icon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i0.hdslb.com/bfs/new_dyn/b519bc07607c18de220cc6372f5d5e5e3461569935575626.png');
+            background-size: 100% 300%;
+            background-repeat: no-repeat;
+            transition: opacity 0.4s ease-in-out;
+        }
+        
+        /* 默认状态 - 顶部1/3 */
+        .title-icon.default {
+            background-position: 0 0;
+            opacity: 1;
+        }
+        
+        /* 鼠标悬浮在弹幕上状态 - 中间1/3 */
+        .title-icon.hover {
+            background-position: 0 50.33333%;
+            opacity: 0;
+        }
+        
+        /* 成功状态 - 底部1/3 */
+        .title-icon.success {
+            background-position: 0 100.66666%;
+            opacity: 0;
+        }
+        
+        /* 混合过渡状态 - 鼠标在弹幕上 */
+        .title-icon-wrapper.transitioning .title-icon.default {
+            opacity: 0;
+        }
+        
+        .title-icon-wrapper.transitioning .title-icon.hover {
+            opacity: 1;
+        }
+        
+        /* 混合过渡状态 - 成功状态 */
+        .title-icon-wrapper.transitioning.success .title-icon.default,
+        .title-icon-wrapper.transitioning.success .title-icon.hover {
+            opacity: 0;
+        }
+        
+        .title-icon-wrapper.transitioning.success .title-icon.success {
+            opacity: 1;
+        }
+        
+        .title-label {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+        
+        .status {
+            font-size: 10px;
+            font-weight: normal;
+            opacity: 0.9;
+            margin-left: 4px;
+            white-space: nowrap;
+        }
+        
+        /* 弹幕显示区域 */
+        .danmu-display {
+            position: absolute;
+            top: 26px;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            overflow: hidden;
+            background-color: rgba(57, 197, 187, 0.05);
+        }
+        
+        .danmu-scroll-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            will-change: transform;
+        }
+        
+        .danmu-item {
+            width: 100%;
+            background-color: #e6f7ff;
+            border-bottom: 1px solid #66ccff;
+            padding: 4px 6px;
+            font-size: 10px;
+            color: #333;
+            cursor: default;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+        
+        .danmu-item:hover {
+            background-color: #d4f0ff;
+        }
+        
+        .danmu-item:nth-child(odd) {
+            background-color: #f0fdff;
+        }
+        
+        .danmu-item:nth-child(odd):hover {
+            background-color: #e0f5ff;
+        }
+        
+        .danmu-content {
+            word-break: break-word;
+            white-space: normal;
+            line-height: 1.3;
+            max-height: 2.6em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .danmu-meta {
+            display: flex;
+            align-items: center;
+            font-size: 9px;
+            color: #668899;
+            justify-content: space-between;
+            margin-top: 3px;
+        }
+        
+        .danmu-time {
+            white-space: nowrap;
+        }
+        
+        .danmu-likes {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .like-icon {
+            color: #ff6b6b;
+            margin-right: 2px;
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .danmu-likes:hover .like-icon {
+            transform: scale(1.2);
+        }
+        
+        .danmu-likes.liked .like-icon {
+            color: #ff3b3b;
+            animation: likePulse 0.3s;
+        }
+        
+        @keyframes likePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1.2); }
+        }
+        
+        /* 控制区域 */
+        .control-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            padding: 0 6px;
+            background-color: #f7f7f7;
+            border-top: 1px solid #66ccff;
+            border-bottom: 1px solid #66ccff;
+        }
+        
+        .sort-label {
+            font-size: 10px;
+            color: #668899;
+            margin-right: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .sort-options {
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+        }
+        
+        .sort-option {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .sort-option input {
+            margin-right: 2px;
+            width: 10px;
+            height: 10px;
+        }
+        
+        .sort-option label {
+            font-size: 9px;
+            color: #668899;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        /* 发送弹幕区域 */
+        .danmu-send {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            padding: 3px;
+            background-color: #f7f7f7;
+            border-top: 1px solid #66ccff;
+        }
+        
+        .input-group {
+            display: flex;
+            height: 24px;
+        }
+        
+        .danmu-input {
+            flex: 1;
+            height: 24px;
+            border: 1px solid #d5e8f1;
+            padding: 0 6px;
+            font-size: 10px;
+            outline: none;
+            background-color: #e4f0f6;
+            color: #668899;
+            transition: border-color 0.3s ease;
+        }
+        
+        .danmu-input:focus {
+            border-color: #39C5bb;
+        }
+        
+        .send-btn {
+            width: 45px;
+            height: 24px;
+            background-color: #39c5bb;
+            border: none;
+            color: white;
+            font-size: 10px;
+            cursor: pointer;
+            margin-left: 4px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        
+        .send-btn:hover {
+            background-color: #33b1a8;
+        }
+        
+        .send-btn:active {
+            background-color: #2e9d95;
+        }
+        
+        .send-btn.success {
+            background-color: #4CAF50;
+            animation: successPulse 0.5s;
+        }
+        
+        @keyframes successPulse {
+            0% { background-color: #39c5bb; }
+            50% { background-color: #4CAF50; }
+            100% { background-color: #4CAF50; }
+        }
+        
+        /* 加载状态样式 */
+        .loading-overlay {
+            position: absolute;
+            top: 26px;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .loading-overlay.fade-out {
+            animation: fadeOut 0.3s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(10px); }
+        }
+        
+        .loading-text {
+            font-size: 12px;
+            color: #39C5bb;
+            font-weight: 500;
+            animation: loadingPulse 1.5s infinite ease-in-out;
+        }
+        
+        @keyframes loadingPulse {
+            0% { opacity: 0.5; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.5; transform: scale(0.95); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-icon-wrapper" id="iconWrapper">
+                <div class="title-icon default"></div>
+                <div class="title-icon hover"></div>
+                <div class="title-icon success"></div>
+            </div>
+            <span class="title-label">自由弹幕墙</span>
+            <div class="status" id="status">電籽正在使劲加载弹幕池...<br>~o(=>ω<=)</div>
+        </div>
+        
+        <div class="danmu-display">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-text">電籽正在努力加载弹幕池...<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(=>ω<=)</div>
+            </div>
+            <div class="danmu-scroll-container" id="danmuContainer"></div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="sort-label">排序の法:</div>
+            <div class="sort-options">
+                <div class="sort-option">
+                    <input type="radio" id="sort-random" name="sort" value="random" checked>
+                    <label for="sort-random">推荐</label>
+                </div>
+                <div class="sort-option">
+                    <input type="radio" id="sort-popular" name="sort" value="popular">
+                    <label for="sort-popular">热门</label>
+                </div>
+                <div class="sort-option">
+                    <input type="radio" id="sort-latest" name="sort" value="latest">
+                    <label for="sort-latest">新鲜出炉</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="danmu-send">
+            <div class="input-group">
+                <input type="text" class="danmu-input" id="danmuInput" maxlength="40" title="请输入弹幕内容，最多40字噢">
+                <button class="send-btn" id="sendBtn" title="将弹幕发出去,大家都有机会看到噢">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 配置信息
+        const CONFIG = {
+            binId: "6949286c43b1c97be9fe6097",
+            apiKey: "$2a$10$usS36BdO17gWRxIMd56gjOwrDWBlfrGdsPW1AFFhcp1TBUrbqFg4G",
+            apiUrl: "https://api.jsonbin.io/v3/b",
+            scrollSpeed: 20,
+            debugMode: true
+        };
+        
+        // 占位文本数组
+        const PLACEHOLDERS = [
+            "发个友善的弹幕见证当下！",
+            "M6CF弹幕网,乾杯!!",
+            "这里是弹幕墙,不是无人区",
+            "请勿发送违规弹幕噢"
+        ];
+        
+        // 全局变量
+        let danmuData = [];
+        let currentSort = "random";
+        let animationId = null;
+        let isScrolling = true;
+        let likedDanmu = new Set();
+        let scrollPosition = 0;
+        let lastTimestamp = 0;
+        let containerHeight = 120;
+        let allItems = []; // 所有创建的弹幕项
+        let dataIndex = 0;
+        let totalContentHeight = 0; // 总内容高度
+        let currentIconState = 'default'; // 当前图标状态
+        let isMouseOverDanmu = false; // 鼠标是否在弹幕上
+        
+        // DOM元素
+        let danmuContainer;
+        let danmuInput;
+        let sendBtn;
+        let statusEl;
+        let sortRadios;
+        let loadingOverlay;
+        let iconWrapper;
+        
+        // 计算弹幕项高度
+        function calculateItemHeight(text) {
+            const lineHeight = 14;
+            const baseHeight = 22;
+            const charsPerLine = 15;
+            const lines = Math.ceil(text.length / charsPerLine);
+            const contentLines = Math.min(lines, 2);
+            return baseHeight + (contentLines * lineHeight);
+        }
+        
+        // 调试输出
+        function debugLog(message) {
+            if (CONFIG.debugMode) {
+                console.log(`[弹幕墙] ${message}`);
+            }
+        }
+        
+        // 随机选择占位文本
+        function getRandomPlaceholder() {
+            const randomIndex = Math.floor(Math.random() * PLACEHOLDERS.length);
+            return PLACEHOLDERS[randomIndex];
+        }
+        
+        // 更新精灵图状态 - 使用混合过渡效果
+        function updateTitleIcon(state) {
+            // state: 'default', 'hover', 'success'
+            if (!iconWrapper) return;
+            
+            // 如果已经是当前状态，则不重复执行（成功状态除外）
+            if (currentIconState === state && state !== 'success') return;
+            
+            // 移除所有过渡类
+            iconWrapper.classList.remove('transitioning', 'success');
+            
+            // 添加过渡效果
+            if (state !== currentIconState) {
+                iconWrapper.classList.add('transitioning');
+                
+                // 如果是切换到成功状态，添加success类
+                if (state === 'success') {
+                    iconWrapper.classList.add('success');
+                }
+            }
+            
+            currentIconState = state;
+            debugLog(`图标状态变更为: ${state}`);
+            
+            // 如果是成功状态，3秒后根据鼠标位置恢复
+            if (state === 'success') {
+                setTimeout(() => {
+                    if (currentIconState === 'success') {
+                        // 恢复为适当的状态
+                        updateTitleIcon(isMouseOverDanmu ? 'hover' : 'default');
+                    }
+                }, 3000);
+            }
+        }
+        
+        // 显示加载动画
+        function showLoading() {
+            loadingOverlay.classList.remove('fade-out');
+            loadingOverlay.classList.add('active');
+            debugLog("显示加载动画");
+        }
+        
+        // 隐藏加载动画
+        function hideLoading() {
+            loadingOverlay.classList.add('fade-out');
+            setTimeout(() => {
+                loadingOverlay.classList.remove('active', 'fade-out');
+            }, 300);
+            debugLog("隐藏加载动画");
+        }
+        
+        // 格式化时间
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            
+            if (diffMins < 1) return "刚刚";
+            if (diffMins < 60) return `${diffMins}分前`;
+            if (diffHours < 24) return `${diffHours}时前`;
+            
+            return `${date.getMonth()+1}/${date.getDate()}`;
+        }
+        
+        // 从JSONBin获取弹幕数据
+        async function fetchDanmuData() {
+            try {
+                showLoading();
+                statusEl.textContent = "加载中...";
+                debugLog("正在从JSONBin获取弹幕数据");
+                
+                const response = await fetch(`${CONFIG.apiUrl}/${CONFIG.binId}/latest`, {
+                    headers: {
+                        "X-Master-Key": CONFIG.apiKey,
+                        "Content-Type": "application/json"
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.record && Array.isArray(result.record.data)) {
+                    danmuData = result.record.data;
+                    debugLog(`获取到${danmuData.length}条弹幕`);
+                    
+                    if (danmuData.length === 0) {
+                        statusEl.textContent = "0条";
+                    } else {
+                        statusEl.textContent = `有${danmuData.length}条`;
+                    }
+                    
+                    sortDanmu(currentSort);
+                    setupInfiniteScroll();
+                    hideLoading();
+                } else {
+                    throw new Error("数据格式不正确唉");
+                }
+            } catch (error) {
+                debugLog(`获取数据失败: ${error.message}`);
+                statusEl.textContent = "连接失败";
+                danmuData = [];
+                statusEl.textContent = "0条";
+                hideLoading();
+            }
+        }
+        
+        // 排序弹幕
+        function sortDanmu(sortType) {
+            debugLog(`排序方式: ${sortType}`);
+            
+            const tempData = [...danmuData];
+            
+            switch(sortType) {
+                case "random":
+                    for (let i = tempData.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [tempData[i], tempData[j]] = [tempData[j], tempData[i]];
+                    }
+                    danmuData = tempData;
+                    break;
+                    
+                case "popular":
+                    danmuData.sort((a, b) => b.like - a.like);
+                    break;
+                    
+                case "latest":
+                    danmuData.sort((a, b) => b.time - a.time);
+                    break;
+            }
+            
+            currentSort = sortType;
+            dataIndex = 0;
+        }
+        
+        // 创建弹幕元素
+        function createDanmuElement(item) {
+            const danmuItem = document.createElement("div");
+            danmuItem.className = "danmu-item";
+            danmuItem.dataset.id = item.id;
+            danmuItem.title = item.content;
+            
+            const isLiked = likedDanmu.has(item.id);
+            
+            const itemHeight = calculateItemHeight(item.content);
+            danmuItem.style.height = `${itemHeight}px`;
+            
+            danmuItem.innerHTML = `
+                <div class="danmu-content">${item.content}</div>
+                <div class="danmu-meta">
+                    <div class="danmu-time">${formatTime(item.time)}</div>
+                    <div class="danmu-likes ${isLiked ? 'liked' : ''}" data-id="${item.id}" title="点赞">
+                        <span class="like-icon">♥</span>
+                        <span class="like-count">${item.like}</span>
+                    </div>
+                </div>
+            `;
+            
+            return danmuItem;
+        }
+        
+        // 设置无限滚动
+        function setupInfiniteScroll() {
+            danmuContainer.innerHTML = "";
+            allItems = [];
+            dataIndex = 0;
+            totalContentHeight = 0;
+            
+            if (danmuData.length === 0) {
+                const emptyItem = document.createElement("div");
+                emptyItem.className = "danmu-item";
+                emptyItem.innerHTML = '<div class="danmu-content">弹幕池空空如也...</div>';
+                emptyItem.style.height = "30px";
+                danmuContainer.appendChild(emptyItem);
+                allItems.push(emptyItem);
+                totalContentHeight = 30;
+                return;
+            }
+            
+            // 创建足够的弹幕项，至少填满3倍容器高度
+            let itemsCreated = 0;
+            while (totalContentHeight < containerHeight * 3 && itemsCreated < 50) {
+                const item = danmuData[dataIndex % danmuData.length];
+                const danmuElement = createDanmuElement(item);
+                const itemHeight = calculateItemHeight(item.content);
+                
+                danmuContainer.appendChild(danmuElement);
+                allItems.push(danmuElement);
+                totalContentHeight += itemHeight;
+                dataIndex++;
+                itemsCreated++;
+            }
+            
+            scrollPosition = 0;
+            danmuContainer.style.transform = `translateY(0px)`;
+            
+            setupLikeListeners();
+            
+            debugLog(`创建${allItems.length}个弹幕项，总高度: ${totalContentHeight}px`);
+        }
+        
+        // 设置点赞事件监听
+        function setupLikeListeners() {
+            // 先移除之前的事件监听器（避免重复）
+            const newLikeButtons = document.querySelectorAll('.danmu-likes');
+            newLikeButtons.forEach(likeBtn => {
+                likeBtn.removeEventListener('click', handleLikeClick);
+                likeBtn.addEventListener('click', handleLikeClick);
+            });
+            
+            // 移除之前的弹幕鼠标事件
+            const newDanmuItems = document.querySelectorAll('.danmu-item');
+            newDanmuItems.forEach(item => {
+                item.removeEventListener('mouseenter', handleDanmuMouseEnter);
+                item.removeEventListener('mouseleave', handleDanmuMouseLeave);
+                
+                item.addEventListener('mouseenter', handleDanmuMouseEnter);
+                item.addEventListener('mouseleave', handleDanmuMouseLeave);
+            });
+        }
+        
+        // 处理弹幕鼠标进入
+        function handleDanmuMouseEnter() {
+            isMouseOverDanmu = true;
+            // 只有当当前不是成功状态时才更新为hover
+            if (currentIconState !== 'success') {
+                updateTitleIcon('hover');
+            }
+            debugLog("鼠标进入弹幕");
+        }
+        
+        // 处理弹幕鼠标离开
+        function handleDanmuMouseLeave() {
+            isMouseOverDanmu = false;
+            // 只有当当前不是成功状态时才更新为default
+            if (currentIconState !== 'success') {
+                updateTitleIcon('default');
+            }
+            debugLog("鼠标离开弹幕");
+        }
+        
+        // 动画循环
+        function animateScroll(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            
+            if (isScrolling && danmuData.length > 0) {
+                // 计算移动距离
+                const deltaY = (CONFIG.scrollSpeed * deltaTime) / 1000;
+                scrollPosition += deltaY;
+                
+                // 当滚动接近总高度的一半时，开始添加新内容
+                if (scrollPosition > totalContentHeight / 2) {
+                    // 添加新的弹幕项
+                    const newItem = danmuData[dataIndex % danmuData.length];
+                    const newDanmuElement = createDanmuElement(newItem);
+                    const newItemHeight = calculateItemHeight(newItem.content);
+                    
+                    danmuContainer.appendChild(newDanmuElement);
+                    allItems.push(newDanmuElement);
+                    totalContentHeight += newItemHeight;
+                    dataIndex++;
+                    
+                    // 延迟1秒后移除最旧的弹幕项
+                    setTimeout(() => {
+                        if (allItems.length > 20) { // 保持一定数量的弹幕项
+                            const oldestItem = allItems.shift();
+                            if (oldestItem && oldestItem.parentNode === danmuContainer) {
+                                const oldestItemHeight = oldestItem.offsetHeight;
+                                danmuContainer.removeChild(oldestItem);
+                                totalContentHeight -= oldestItemHeight;
+                                scrollPosition -= oldestItemHeight;
+                                
+                                debugLog(`移除旧弹幕项，剩余: ${allItems.length}项，总高度: ${totalContentHeight}px`);
+                            }
+                        }
+                    }, 1000);
+                    
+                    setupLikeListeners();
+                }
+                
+                // 更新容器位置
+                danmuContainer.style.transform = `translateY(${-scrollPosition}px)`;
+            }
+            
+            animationId = requestAnimationFrame(animateScroll);
+        }
+        
+        // 开始滚动
+        function startScrolling() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            lastTimestamp = 0;
+            animationId = requestAnimationFrame(animateScroll);
+            debugLog(`弹幕滚动已启动，速度: ${CONFIG.scrollSpeed}px/秒`);
+        }
+        
+        // 处理点赞点击
+        async function handleLikeClick(event) {
+            event.stopPropagation();
+            
+            const likeBtn = event.currentTarget;
+            const danmuId = parseInt(likeBtn.dataset.id);
+            
+            if (likedDanmu.has(danmuId)) {
+                debugLog("您已赞过此弹幕");
+                return;
+            }
+            
+            const danmuIndex = danmuData.findIndex(item => item.id === danmuId);
+            if (danmuIndex === -1) {
+                debugLog("找不到弹幕ID: " + danmuId);
+                return;
+            }
+            
+            danmuData[danmuIndex].like += 1;
+            likedDanmu.add(danmuId);
+            
+            // 更新点赞按钮状态
+            document.querySelectorAll(`.danmu-likes[data-id="${danmuId}"]`).forEach(btn => {
+                btn.classList.add('liked');
+                btn.querySelector('.like-count').textContent = danmuData[danmuIndex].like;
+            });
+            
+            // 更新精灵图为成功状态
+            updateTitleIcon('success');
+            
+            if (currentSort === 'popular') {
+                sortDanmu('popular');
+                setupInfiniteScroll();
+            }
+            
+            await saveToJsonBin();
+            
+            debugLog(`弹幕ID ${danmuId} 点赞成功咯`);
+        }
+        
+        // 保存数据到JSONBin
+        async function saveToJsonBin() {
+            try {
+                const updateData = {
+                    data: danmuData
+                };
+                
+                debugLog("正在保存数据到JSONBin...");
+                const response = await fetch(`${CONFIG.apiUrl}/${CONFIG.binId}`, {
+                    method: "PUT",
+                    headers: {
+                        "X-Master-Key": CONFIG.apiKey,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                debugLog("数据保存成功");
+                return true;
+            } catch (error) {
+                debugLog(`保存数据失败: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // 发送弹幕
+        async function sendDanmu(content) {
+            try {
+                danmuInput.style.borderColor = "#d5e8f1";
+                debugLog(`发送弹幕: ${content}`);
+                
+                const newDanmu = {
+                    id: Date.now(),
+
+                    content: content,
+                    time: Date.now(),
+                    like: 0
+                };
+                
+                danmuData.unshift(newDanmu);
+                statusEl.textContent = `${danmuData.length}条`;
+                
+                // 更新精灵图为成功状态
+                updateTitleIcon('success');
+                
+                // 设置发送按钮为成功状态
+                sendBtn.classList.add('success');
+                setTimeout(() => {
+                    sendBtn.classList.remove('success');
+                }, 500);
+                
+                sortDanmu(currentSort);
+                setupInfiniteScroll();
+                
+                const saved = await saveToJsonBin();
+                
+                if (saved) {
+                    debugLog("弹幕发送成功辣");
+                    // 随机更换占位文本
+                    danmuInput.placeholder = getRandomPlaceholder();
+                }
+                
+            } catch (error) {
+                debugLog(`发送失败: ${error.message}`);
+                danmuInput.style.borderColor = "#d83e3e";
+                setTimeout(() => {
+                    danmuInput.style.borderColor = "#d5e8f1";
+                }, 2000);
+            }
+        }
+        
+        // 事件监听
+        function setupEventListeners() {
+            // 确保DOM元素已加载
+            danmuContainer = document.getElementById("danmuContainer");
+            danmuInput = document.getElementById("danmuInput");
+            sendBtn = document.getElementById("sendBtn");
+            statusEl = document.getElementById("status");
+            sortRadios = document.querySelectorAll('input[name="sort"]');
+            loadingOverlay = document.getElementById("loadingOverlay");
+            iconWrapper = document.getElementById("iconWrapper");
+            
+            // 设置初始占位文本
+            danmuInput.placeholder = getRandomPlaceholder();
+            
+            sendBtn.addEventListener("click", () => {
+                const content = danmuInput.value.trim();
+                if (content && content.length <= 40) {
+                    sendDanmu(content);
+                    danmuInput.value = "";
+                } else if (content.length > 40) {
+                    danmuInput.style.borderColor = "#d83e3e";
+                    setTimeout(() => {
+                        danmuInput.style.borderColor = "#d5e8f1";
+                    }, 2000);
+                }
+            });
+            
+            danmuInput.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") {
+                    sendBtn.click();
+                }
+            });
+            
+            sortRadios.forEach(radio => {
+                radio.addEventListener("change", (e) => {
+                    const sortType = e.target.value;
+                    debugLog(`排序方式变更: ${sortType}`);
+                    sortDanmu(sortType);
+                    setupInfiniteScroll();
+                });
+            });
+            
+            danmuContainer.addEventListener("mouseenter", () => {
+                isScrolling = false;
+                debugLog("滚动暂停");
+            });
+            
+            danmuContainer.addEventListener("mouseleave", () => {
+                isScrolling = true;
+                debugLog("滚动继续");
+            });
+        }
+        
+        // 初始化
+        async function init() {
+            debugLog("弹幕墙初始化开始");
+            
+            setupEventListeners();
+            await fetchDanmuData();
+            startScrolling();
+            
+            debugLog("弹幕墙初始化完成");
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+</body>
+</html>

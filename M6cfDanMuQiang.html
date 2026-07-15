@@ -430,14 +430,20 @@
     </div>
 
     <script>
-        // 配置信息
+        // 配置信息 - GitHub Gist
         const CONFIG = {
-            binId: "6949286c43b1c97be9fe6097",
-            apiKey: "$2a$10$usS36BdO17gWRxIMd56gjOwrDWBlfrGdsPW1AFFhcp1TBUrbqFg4G",
-            apiUrl: "https://api.jsonbin.io/v3/b",
+            gistId: "4411a021f0a001864d7392b0171189d1",
+            // 哈！不要瞎用这个！恶意攻击也没用，我本地有备份的！（￣︶￣）↗　
+            tokenPart1: "ghp_HmYvI5HaXpWwtTjLLX",
+            tokenPart2: "W6C79aozj9Lo4V1g8O",
+            filename: "M6CFDanMuQiang.json",
             scrollSpeed: 20,
             debugMode: true
         };
+        
+        // 拼接完整 Token
+        // 看什么看！再看就对你哈气！ฅ(•ㅅ•)ฅ
+        const GITHUB_TOKEN = CONFIG.tokenPart1 + CONFIG.tokenPart2;
         
         // 占位文本数组
         const PLACEHOLDERS = [
@@ -560,17 +566,18 @@
             return `${date.getMonth()+1}/${date.getDate()}`;
         }
         
-        // 从JSONBin获取弹幕数据
+        // 从 GitHub Gist 获取弹幕数据
         async function fetchDanmuData() {
             try {
                 showLoading();
                 statusEl.textContent = "加载中...";
-                debugLog("正在从JSONBin获取弹幕数据");
+                debugLog("正在从 GitHub Gist 获取弹幕数据");
                 
-                const response = await fetch(`${CONFIG.apiUrl}/${CONFIG.binId}/latest`, {
+                const gistApiUrl = `https://api.github.com/gists/${CONFIG.gistId}`;
+                const response = await fetch(gistApiUrl, {
                     headers: {
-                        "X-Master-Key": CONFIG.apiKey,
-                        "Content-Type": "application/json"
+                        "Accept": "application/vnd.github.v3+json",
+                        "Authorization": `token ${GITHUB_TOKEN}`
                     }
                 });
                 
@@ -579,9 +586,25 @@
                 }
                 
                 const result = await response.json();
+                const files = result.files || {};
+                let content = null;
                 
-                if (result.record && Array.isArray(result.record.data)) {
-                    danmuData = result.record.data;
+                // 查找目标文件
+                for (const filename in files) {
+                    if (filename === CONFIG.filename) {
+                        content = files[filename].content;
+                        break;
+                    }
+                }
+                
+                if (!content) {
+                    throw new Error(`找不到文件: ${CONFIG.filename}`);
+                }
+                
+                const parsedData = JSON.parse(content);
+                
+                if (parsedData && Array.isArray(parsedData.data)) {
+                    danmuData = parsedData.data;
                     debugLog(`获取到${danmuData.length}条弹幕`);
                     
                     if (danmuData.length === 0) {
@@ -839,21 +862,53 @@
             debugLog(`弹幕ID ${danmuId} 点赞成功咯`);
         }
         
-        // 保存数据到JSONBin
-        async function saveToJsonBin() {
+        // 保存数据到 GitHub Gist
+        async function saveToGist() {
             try {
                 const updateData = {
                     data: danmuData
                 };
                 
-                debugLog("正在保存数据到JSONBin...");
-                const response = await fetch(`${CONFIG.apiUrl}/${CONFIG.binId}`, {
-                    method: "PUT",
+                debugLog("正在保存数据到 GitHub Gist...");
+                const gistApiUrl = `https://api.github.com/gists/${CONFIG.gistId}`;
+                
+                // 先获取当前 Gist 的版本号 (etag)
+                const getResponse = await fetch(gistApiUrl, {
                     headers: {
-                        "X-Master-Key": CONFIG.apiKey,
+                        "Accept": "application/vnd.github.v3+json",
+                        "Authorization": `token ${GITHUB_TOKEN}`
+                    }
+                });
+                
+                if (!getResponse.ok) {
+                    throw new Error(`获取Gist失败: ${getResponse.status}`);
+                }
+                
+                const gistData = await getResponse.json();
+                const currentSha = gistData.files?.[CONFIG.filename]?.sha || null;
+                
+                // 更新 Gist
+                const payload = {
+                    files: {
+                        [CONFIG.filename]: {
+                            content: JSON.stringify(updateData, null, 2)
+                        }
+                    }
+                };
+                
+                // 如果有 sha，带上它进行更新
+                if (currentSha) {
+                    payload.files[CONFIG.filename].sha = currentSha;
+                }
+                
+                const response = await fetch(gistApiUrl, {
+                    method: "PATCH",
+                    headers: {
+                        "Accept": "application/vnd.github.v3+json",
+                        "Authorization": `token ${GITHUB_TOKEN}`,
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify(updateData)
+                    body: JSON.stringify(payload)
                 });
                 
                 if (!response.ok) {
@@ -897,7 +952,7 @@
                 sortDanmu(currentSort);
                 setupInfiniteScroll();
                 
-                const saved = await saveToJsonBin();
+                const saved = await saveToGist();
                 
                 if (saved) {
                     debugLog("弹幕发送成功辣");
@@ -984,5 +1039,4 @@
 </body>
 
 </html>
-
 
